@@ -1,0 +1,4 @@
+azure-iothub-device-client
+pyyaml
+pylint
+pyserial

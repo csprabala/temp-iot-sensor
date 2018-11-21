@@ -1,0 +1,11 @@
+location: "eastus"
+rg_name: "temp-sensor-iot"
+subscription_id: ""
+user_name: ""
+password: ""
+simulator_id: "simulator_138459"
+sensor_id: "sensor_428098"
+iotHubName: "bsclimatehub"
+simulator_connection_string: "HostName=bsclimatehub.azure-devices.net;DeviceId=simulator_138459;SharedAccessKey=<key>"
+sensor_connection_string: "HostName=bsclimatehub.azure-devices.net;DeviceId=sensor_428098;SharedAccessKey=<key>"
+baud_rate: 9600

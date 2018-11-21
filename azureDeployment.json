@@ -1,0 +1,184 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "iotHubName":{
+            "type": "string"
+        },
+        "iotHubSkuName":{
+            "type": "string"
+        },
+        "iotHubCapacityUnits":{
+            "type": "string"
+        },
+        "functionAppName":{
+            "type": "string"
+        },
+        "storageName":{
+            "type": "string"
+        },
+        "streamAnalyticsJobName":{
+            "type": "string"
+        },
+        "streamAnalyticsJobSku":{
+            "type": "string"
+        },
+        "userPrincipal":{
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-04-01",
+            "location": "[resourceGroup().location]",
+            "type": "Microsoft.Devices/IotHubs",
+            "name": "[parameters('iotHubName')]",
+            "sku": {
+                "name": "[parameters('iotHubSkuName')]",
+                "capacity": "[parameters('iotHubCapacityUnits')]",
+                "tier": "Standard"
+            },
+            "properties":{
+                "eventHubEndpoints": {
+                    "events": {
+                        "retentionTimeInDays": 7,
+                        "partitionCount": 4
+                    },
+                    "operationsMonitoringEvents":{
+                        "retentionTimeInDays": 1,
+                        "partitionCount": 4
+                    }
+                },
+                
+                "features": "None"
+            }
+            
+        },
+        {
+            "apiVersion": "2016-03-01",
+            "location": "[resourceGroup().location]",
+            "type": "Microsoft.Web/sites",
+            "name": "[parameters('functionAppName')]",
+            "properties": {
+                "name": "[parameters('functionAppName')]",
+                "siteConfig":{
+                    "appSettings": [
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "dotnet"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')), '2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~2"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')), '2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[concat(toLower(parameters('functionAppName')), 'a3da')]"
+                        },
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "8.11.1"
+                        }
+                    ]
+                },
+                "clientAffinityEnabled": false,
+                "reserved": false
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageName'))]"
+            ],
+            "kind": "functionapp"
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('storageName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "accountType": "Standard_LRS"
+            }
+        },
+        {
+            "apiVersion": "2016-03-01",
+            "location": "[resourceGroup().location]",
+            "type": "Microsoft.StreamAnalytics/streamingjobs",
+            "name": "[parameters('streamAnalyticsJobName')]",
+            "dependsOn": [
+                "[concat('Microsoft.Devices/IotHubs/', parameters('iotHubName'))]"
+              ],
+            "properties":{
+                "sku": {
+                    "name": "[parameters('streamAnalyticsJobSku')]"
+                },
+                "outputErrorPolicy": "Drop",
+                "eventsOutOfOrderPolicy": "Adjust",
+                "eventsOutOfOrderMaxDelayInSeconds": 2,
+                "eventsLateArrivalMaxDelayInSeconds": 7,
+                "dataLocale": "en-US",
+                "compatibilityLevel": "1.0",
+                "inputs": [
+                    {
+                        "name": "IoTHub",
+                        "properties": {
+                          "datasource": {
+                            "properties": {
+                              "iotHubNamespace": "[parameters('iotHubName')]",
+                              "sharedAccessPolicyKey": "[listkeys(resourceId('Microsoft.Devices/IotHubs/IotHubKeys',parameters('iotHubName'), 'iothubowner'),'2016-02-03').primaryKey]",
+                              "sharedAccessPolicyName": "iothubowner",
+                              "endpoint": "messages/events"
+                            },
+                            "type": "Microsoft.Devices/IotHubs"
+                          },
+                          "serialization": {
+                            "properties": {
+                              "encoding": "UTF8"
+                            },
+                            "type": "Json"
+                          },
+                          "type": "Stream"
+                        }
+                      }
+                    
+                ],
+                "transformation": {
+                    "name": "Transformation",
+                    "properties": {
+                        "query": "SELECT\r\n    *\r\nINTO\r\n    [PBI]\r\nFROM\r\n    [IoTHub]",
+                        "streamingUnits": 3
+                    }
+                },
+                "outputs":[
+                    {
+                        "name": "PBI",
+                        "type": "Microsoft.StreamAnalytics/streamingjobs/outputs",
+                        "apiVersion": "2016-03-01",
+                        "properties":{
+                            "datasource":{
+                                "type": "PowerBI",
+                                "properties":{
+                                    "dataset": "ClimateDataSet",
+                                    "table": "ClimateDataTable",
+                                    "refreshToken": "dummy",
+                                    "tokenUserPrincipalName": "[parameters('userPrincipal')]",
+                                    "groupName": "My Workspace"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        
+    }
+
+}
