@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters":{
         "iotHubName":{
-            "value": "bsclimatehub"
+            "value": "iotdevopsdemohub"
         },
         "iotHubSkuName":{
             "value": "S1"
@@ -12,19 +12,19 @@
             "value": "1"
         },
         "functionAppName":{
-            "value": "bsclimatefunapp"
+            "value": "iotdevopsdemofunapp"
         },
         "storageName":{
-            "value": "bsclimatestore"
+            "value": "iotdevopsdemostore"
         },
         "streamAnalyticsJobName":{
-            "value": "bsclimateanalyticsquery"
+            "value": "iotdevopsdemoanalytics"
         },
         "streamAnalyticsJobSku":{
             "value": "Standard"
         },
         "userPrincipal":{
-            "value": "cprabala@brainscale.com"
+            "value": "cprabala@us.brainscale.com"
         }
     }
 }

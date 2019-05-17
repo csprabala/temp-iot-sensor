@@ -27,7 +27,7 @@ echo "Beginning deployment: $deployment"
 eval $(parse_yaml settings.yaml)
 
 # Login to Azure
-az login -u $user_name -p $password
+az login --service-principal -u $user_name -p $password --tenant $tenant
 
 # Set default subscription
 az account set --subscription $subscription_id

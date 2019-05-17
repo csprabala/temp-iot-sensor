@@ -102,7 +102,8 @@ def run():
                 input.readline()
                 while True:
                     line = input.readline()
-                    sensor_data = line.split(',')
+                    print(line)
+                    sensor_data = line.split(b',')
                     msg_txt_formatted = MSG_TXT % (float(sensor_data[0]), float(sensor_data[1]), 
                         float(sensor_data[2]), float(sensor_data[3]))
                     message = IoTHubMessage(msg_txt_formatted)
